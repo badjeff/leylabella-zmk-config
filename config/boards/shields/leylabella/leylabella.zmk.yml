@@ -1,0 +1,12 @@
+file_format: "1"
+id: leylabella
+name: leylabella
+type: shield
+url: https://github.com/badjeff/leylabella/
+requires: [pro_micro]
+exposes: []
+features:
+  - keys
+siblings:
+  - leylabella_m1
+  - leylabella_m2

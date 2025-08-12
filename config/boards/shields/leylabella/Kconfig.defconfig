@@ -1,0 +1,6 @@
+if SHIELD_LEYLABELLA_M1 || SHIELD_LEYLABELLA_M2
+
+config ZMK_KEYBOARD_NAME
+	default "leylabella"
+
+endif

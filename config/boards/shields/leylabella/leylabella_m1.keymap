@@ -1,0 +1,207 @@
+/*
+ * Copyright (c) 2020 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+#include <behaviors.dtsi>
+#include <behaviors/mouse_keys.dtsi>
+#include <behaviors/mouse_key_press.dtsi>
+#include <behaviors/mouse_key_toggle.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/rgb.h>
+#include <dt-bindings/zmk/ext_power.h>
+#include <dt-bindings/zmk/outputs.h>
+#include <dt-bindings/zmk/mouse.h>
+#include <dt-bindings/zmk/input_transform.h>
+
+#include <input/processors/report_rate_limit.dtsi>
+
+#define DEF 0
+#define UNL 1
+#define LHB 2
+#define MSC 3
+#define TBM 4
+
+&zip_report_rate_limit {
+        limit-ble-only;
+};
+
+/ {
+        xy_transf: xy_transf {
+                compatible = "zmk,input-processor-transform";
+                #input-processor-cells = <1>;
+                type = <INPUT_EV_REL>;
+                x-codes = <INPUT_REL_X>, <INPUT_REL_WHEEL>;
+                y-codes = <INPUT_REL_Y>, <INPUT_REL_HWHEEL>;
+        };
+        xy_scaler: xy_scaler {
+                compatible = "zmk,input-processor-scaler";
+                #input-processor-cells = <2>;
+                type = <INPUT_EV_REL>;
+                codes = <INPUT_REL_X>, <INPUT_REL_Y>;
+                track-remainders;
+        };
+        x_scaler: x_scaler {
+                compatible = "zmk,input-processor-scaler";
+                #input-processor-cells = <2>;
+                type = <INPUT_EV_REL>;
+                codes = <INPUT_REL_X>;
+        };
+        to_wheel: to_wheel {
+                compatible = "zmk,input-processor-code-mapper";
+                #input-processor-cells = <0>;
+                type = <INPUT_EV_REL>;
+                map = <INPUT_REL_X INPUT_REL_MISC>, <INPUT_REL_Y INPUT_REL_WHEEL>;
+        };
+
+        mou0_mmv_il {
+                compatible = "zmk,input-listener";
+                device = <&pd0>;
+                scroll {
+                        layers = <MSC>;
+                        process-next;
+                        input-processors = <&zip_report_rate_limit 15>
+                                         , <&xy_transf (INPUT_TRANSFORM_Y_INVERT)>
+                                         , <&xy_scaler 1 40>
+                                         , <&x_scaler 0 1>
+                                         , <&to_wheel>
+                                         ;
+                };
+                unlimited {
+                        layers = <UNL>;
+                };
+                base {
+                        layers = <DEF LHB>;
+                        input-processors = <&zip_report_rate_limit 15>;
+                };
+        };
+
+        zip_report_rate_limit_alt: zip_report_rate_limit_alt {
+                compatible = "zmk,input-processor-report-rate-limit";
+                #input-processor-cells = <1>;
+                type = <INPUT_EV_REL>;
+                codes = <INPUT_REL_X INPUT_REL_Y>;
+                limit-ble-only;
+        };
+
+        mou0_mmv_il_alt {
+                compatible = "zmk,input-listener";
+                device = <&pd0_alt>;
+                trackball_mode_overriding {
+                        layers = <TBM>;
+                        input-processors = <&zip_report_rate_limit_alt 15>;
+                };
+                normal_scrolling_mode {
+                        layers = <DEF UNL LHB MSC>;
+                        input-processors = <&zip_report_rate_limit_alt 15>
+                                         , <&xy_transf (INPUT_TRANSFORM_Y_INVERT)>
+                                         , <&xy_scaler 1 40> // , <&x_scaler 0 1>
+                                         , <&to_wheel>;
+                };
+        };
+
+        // behaviors {
+        //         ec_s: mouse_scroll {
+        //                 compatible = "zmk,behavior-input-two-axis";
+        //                 #binding-cells = <1>;
+        //                 trigger-period-ms = <12>; // slow down for OTA, default is 3ms
+        //                 x-input-code = <INPUT_REL_HWHEEL>;
+        //                 y-input-code = <INPUT_REL_WHEEL>;
+        //                 time-to-max-speed-ms = <177>;
+        //                 acceleration-exponent = <0>;
+        //         };
+        //         rot_enc: sensor_rotate {
+        //                 compatible = "zmk,behavior-sensor-rotate";
+        //                 #sensor-binding-cells = <0>;
+        //                 bindings = <&ec_s MOVE_Y(-37)>, <&ec_s MOVE_Y(37)>;
+        //                 tap-ms = <65>;
+        //         };
+        // };
+
+        //*** Top view projection of key position ***
+        //   0   3   6   <-- physical layout of L/M/R mouse button key
+        //       1       <-- shoulder twins key
+        //   4       5   <-- the side buttons
+        //   7       8
+        combos {
+                compatible = "zmk,combos";
+                tog_unlimited {
+                        timeout-ms = <120>;
+                        key-positions = <1 3>;
+                        bindings = <&tog UNL>;
+                        layers = < DEF UNL LHB MSC TBM >;
+                };
+                mou_btn_swap {
+                        timeout-ms = <120>;
+                        key-positions = <7 8>;
+                        bindings = <&tog LHB>;
+                        layers = < DEF UNL LHB MSC TBM >;
+                };
+
+                tbm_swap_l {
+                        timeout-ms = <80>;
+                        key-positions = <4 7>;
+                        bindings = <&tog TBM>;
+                        layers = < DEF UNL LHB MSC TBM >;
+                };
+                tbm_swap_r {
+                        timeout-ms = <80>;
+                        key-positions = <5 8>; 
+                        bindings = <&tog TBM>;
+                        layers = < DEF UNL LHB MSC TBM >;
+                };
+        };
+
+        keymap {
+                compatible = "zmk,keymap";
+                default_layer {
+                        display-name = "Default";
+                        bindings = <
+   &mkp LCLK       &mo MSC         &none
+   &mkp MCLK       &mkp MB5        &mkp MB5
+   &mkp RCLK       &mkp MB4        &mkp MB4
+                        >;
+                        // sensor-bindings = <&rot_enc>;
+                };
+                unlimited_layer {
+                        display-name = "Unlimited";
+                        bindings = <
+   &trans          &trans          &trans
+   &trans          &trans          &trans
+   &trans          &trans          &trans
+                        >;
+                        // sensor-bindings = <&rot_enc>;
+                };
+                left_hand_layer {
+                        display-name = "Left Hand";
+                        bindings = <
+   &mkp RCLK       &trans          &trans
+   &mkp MCLK       &trans          &trans
+   &mkp LCLK       &trans          &trans
+                        >;
+                        // sensor-bindings = <&rot_enc>;
+                };
+                MSC_layer {
+                        display-name = "Scroll";
+                        bindings = <
+   &trans          &trans          &trans
+   &trans          &bt BT_SEL 0    &bt BT_SEL 1
+   &trans          &bt BT_SEL 2    &bt BT_CLR
+                        >;
+                        // sensor-bindings = <&rot_enc>;
+                };
+                TBM_layer {
+                        display-name = "Trackball Mode Swap";
+                        bindings = <
+   &trans      &trans          &trans
+   &trans      &trans          &trans
+   &trans      &trans          &trans
+                        >;
+                        // sensor-bindings = <&rot_enc>;
+                };
+       };
+};

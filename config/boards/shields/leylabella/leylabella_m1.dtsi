@@ -1,0 +1,72 @@
+/*
+ * Copyright (c) 2020 Pete Johanson
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+&pinctrl {
+	spi2_default: spi2_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
+							<NRF_PSEL(SPIM_MOSI, 1, 15)>,
+							<NRF_PSEL(SPIM_MISO, 1, 14)>;
+		};
+	};
+	spi2_sleep: spi2_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,
+							<NRF_PSEL(SPIM_MOSI, 1, 15)>,
+							<NRF_PSEL(SPIM_MISO, 1, 14)>;
+			low-power-enable;
+		};
+	};
+};
+
+// release gpio1 11 & 12 from xiao_ble-pinctrl.dtsi
+// for &trackball { irq-gpios }
+&uart0 {
+	status = "disabled";
+};
+
+&spi2 {
+	compatible = "nordic,nrf-spim";
+  status = "okay";
+	pinctrl-0 = <&spi2_default>;
+	pinctrl-1 = <&spi2_sleep>;
+	pinctrl-names = "default", "sleep";
+	cs-gpios = <&gpio1 12 GPIO_ACTIVE_LOW>
+	         , <&gpio0 9 GPIO_ACTIVE_LOW>; // NFC 1
+
+	pd0: pd0@0 {
+		compatible = "pixart,paw3395";
+		status = "okay";
+		label = "pd0";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		irq-gpios = <&gpio1 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		cpi = <1650>;
+		evt-type = <INPUT_EV_REL>;
+		x-input-code = <INPUT_REL_X>;
+		y-input-code = <INPUT_REL_Y>;
+		force-awake;
+	};
+
+	pd0_alt: pd0_alt@1 {
+		compatible = "pixart,pmw3610";
+		status = "okay";
+		label = "pd0_alt";
+		reg = <1>;
+		spi-max-frequency = <4000000>;
+
+		irq-gpios = <&gpio0 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; // NFC 2
+		cpi = <800>;
+		evt-type = <INPUT_EV_REL>;
+		x-input-code = <INPUT_REL_X>;
+		y-input-code = <INPUT_REL_Y>;
+		force-awake;
+		// force-awake-4ms-mode;
+	};
+};
