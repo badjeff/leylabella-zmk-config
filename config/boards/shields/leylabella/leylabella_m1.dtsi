@@ -56,7 +56,7 @@
 	};
 
 	pd0_alt: pd0_alt@1 {
-		compatible = "pixart,pmw3610";
+		compatible = "pixart,pmw3610-alt";
 		status = "okay";
 		label = "pd0_alt";
 		reg = <1>;
