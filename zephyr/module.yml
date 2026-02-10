@@ -1,0 +1,9 @@
+build:
+  # depends:
+  #   - zmk-example-dependency
+  # cmake: .
+  # kconfig: Kconfig
+  settings:
+    board_root: .
+    # dts_root: .
+    # snippet_root:  .
