@@ -13,9 +13,9 @@
 #
 ---
 include:
-  - board: xiao_ble
+  - board: xiao_ble//zmk
     shield: leylabella_m1
     # snippet: studio-rpc-usb-uart
-  - board: xiao_ble
+  - board: xiao_ble//zmk
     shield: leylabella_m2
     # snippet: studio-rpc-usb-uart
